@@ -6,14 +6,19 @@ public class CustomerOrder
 {
     private readonly List<OrderItem> _items = new(); 
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
+    
     public Guid Id { get; }
     public Guid CustomerId { get; }
+    public Guid StoreId { get; }
+    
     public Money Total { get; private set; } = Money.Zero("USD");
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;
+    
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ConfirmedAt { get; private set; }
     public DateTimeOffset? PaidAt { get; private set; }
     public DateTimeOffset? CancelledAt { get; private set; }
+    
     
     private readonly List<IDomainEvent> _domainEvents = new();
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
