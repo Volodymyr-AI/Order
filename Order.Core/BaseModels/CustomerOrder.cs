@@ -6,12 +6,14 @@ public class CustomerOrder
 {
     private readonly List<OrderItem> _items = new(); 
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
-    
-    public Guid Id { get; }
-    public Guid CustomerId { get; }
-    public Guid StoreId { get; }
-    
-    public Money Total { get; private set; } = Money.Zero("USD");
+    public Guid Id { get; private set; }
+    public Guid CustomerId { get; private set; }
+    public int StoreId { get; private set; }
+
+    private Currency? _currency;
+    public Currency Currency => _currency ?? throw new InvalidOperationException("Order currency is not set.");
+    // Potential problem ( previously removed -> = Money.Zero(Currency.FromCode("USD")); for default )) Watch through tests and behaviour
+    public Money Total { get; private set; } 
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;
     
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
@@ -24,14 +26,19 @@ public class CustomerOrder
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     
     private void AddDomainEvent(IDomainEvent @event) => _domainEvents.Add(@event);
+    
+    private CustomerOrder() {}
 
-    public CustomerOrder(Guid id, Guid customerId)
+    public CustomerOrder(Guid id, Guid customerId, int storeId)
     {
         if(id == Guid.Empty) throw new ArgumentException("Id is required.", nameof(id));
         if(customerId == Guid.Empty) throw new ArgumentException("CustomerId is required.", nameof(customerId));
+        if(storeId <= 0) throw new ArgumentOutOfRangeException(nameof(storeId));
 
         Id = id;
         CustomerId = customerId;
+        StoreId = storeId;
+        Status = OrderStatus.Draft;
     }
 
     public void AddItem(OrderItem item)
@@ -41,7 +48,8 @@ public class CustomerOrder
 
         if (_items.Count == 0)
         {
-            Total = Money.Zero(item.UnitPriceSnapshot.Currency);
+            _currency = item.UnitPriceSnapshot.Currency;
+            Total = Money.Zero(_currency.Value);
         }
         else
         {
@@ -72,7 +80,7 @@ public class CustomerOrder
         EnsureDraft();
         if(productId == Guid.Empty)
             throw new ArgumentException("ProductId is required.", nameof(productId));
-        if(newQuantity < 0)
+        if(newQuantity <= 0)
             throw new ArgumentOutOfRangeException(nameof(newQuantity), "Quantity must be > 0.");
         
         var index = _items.FindIndex(x => x.ProductId == productId);
@@ -126,8 +134,15 @@ public class CustomerOrder
 
     private void RecalculateTotal()
     {
-        var currency = _items.Count == 0 ? Total.Currency : _items[0].UnitPriceSnapshot.Currency;
-        var sum = Money.Zero(currency);
+        if (_items.Count == 0)
+        {
+            if(_currency is null)
+                throw new InvalidOperationException("Order currency is not set.");
+            Total = Money.Zero(_currency.Value);
+            return;
+        }
+
+        var sum = Money.Zero(_items[0].UnitPriceSnapshot.Currency);
         foreach (var item in _items)
         {
             sum += item.LineTotal;

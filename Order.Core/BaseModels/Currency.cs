@@ -1,13 +1,8 @@
 namespace Order.Core.BaseModels;
 
-public class Currency
+public readonly record struct Currency(string Code, int DecimalPlaces)
 {
-    public string Code { get; }
-    public int DecimalPlaces { get; }
-
-    public static readonly Currency USD = new("USD", 2);
-    public static readonly Currency EUR = new("EUR", 2);
-    public static readonly Currency JPY = new("JPY", 0);
+    public bool IsValid => !string.IsNullOrWhiteSpace(Code);
 
     private static readonly Dictionary<string, int> KnownCurrencies = new()
     {
@@ -18,18 +13,13 @@ public class Currency
         ["UAH"] = 2
     };
 
-    public Currency(string code, int decimalPlaces)
-    {
-        if(string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Currency code is required.", nameof(code));
-        
-        Code = code;
-        DecimalPlaces = decimalPlaces;
-    }
-
     public static Currency FromCode(string code)
     {
-        var normalized = code.ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Currency code is required.", nameof(code));
+        
+        var normalized = code.Trim().ToUpperInvariant();    
+        
         if (!KnownCurrencies.TryGetValue(normalized, out var places))
             throw new ArgumentException($"Unknown currency: {code}");
         

@@ -3,22 +3,26 @@ namespace Order.Core.BaseModels;
 public readonly record struct Money
 {
     public decimal Amount { get; }
-    public string Currency { get; }
+    public Currency Currency { get; }
 
-    private const int DefaultScale = 2;
-    
-    public static Money Zero(string currency) => new(0m, currency);
-
-    public Money(decimal amount, string currency)
+    public Money(decimal amount, Currency currency)
     {
-        if(string.IsNullOrWhiteSpace(currency))
+        if(!currency.IsValid) 
             throw new ArgumentException("Currency is required.", nameof(currency));
-
+        
         if (amount < 0m)
             throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be negative.");
 
-        Currency = Normalize(currency);
-        Amount = Round(amount, Currency);
+        Currency = currency;
+        Amount = Math.Round(amount, currency.DecimalPlaces, MidpointRounding.AwayFromZero);
+    }
+
+    public static Money Zero(Currency currency)
+    {
+        if(!currency.IsValid)
+            throw new ArgumentException("Currency is required.", nameof(currency));
+        
+        return new Money(decimal.Zero, currency);
     }
 
     public static Money operator +(Money a, Money b)
@@ -35,19 +39,10 @@ public readonly record struct Money
 
     public static void EnsureSameCurrency(Money a, Money b)
     {
-        if (!string.Equals(a.Currency, b.Currency, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Currency mismatch: {a.Currency} vs {b.Currency}.");
-    }
-    private static string Normalize(string c) => (c ?? string.Empty).Trim().ToUpperInvariant();
-
-    private static decimal Round(decimal value, string currency)
-    {
-        var scale = currency switch
-        {
-            "JPY" => 0,
-            _ => DefaultScale
-        };
+        if(!a.Currency.IsValid || !b.Currency.IsValid)
+            throw new InvalidOperationException("Currency is not set.");
         
-        return Math.Round(value, scale, MidpointRounding.AwayFromZero);
+        if (!string.Equals(a.Currency.Code, b.Currency.Code, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Currency mismatch: {a.Currency} vs {b.Currency}.");
     }
 }
