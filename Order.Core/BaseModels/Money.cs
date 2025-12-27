@@ -1,10 +1,11 @@
 namespace Order.Core.BaseModels;
 
-public readonly record struct Money
+public sealed record Money
 {
     public decimal Amount { get; }
     public Currency Currency { get; }
 
+    private Money() {}
     public Money(decimal amount, Currency currency)
     {
         if(!currency.IsValid) 

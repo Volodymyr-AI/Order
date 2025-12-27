@@ -1,5 +1,5 @@
 using Order.Core.BaseModels;
-using Order.Core.Event;
+using Order.Core.DomainEvents;
 using Xunit.Abstractions;
 
 namespace xUnitTesting.DomainTests;

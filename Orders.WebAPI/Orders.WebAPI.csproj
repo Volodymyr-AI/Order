@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+      <UserSecretsId>73ebf83a-75a7-42bc-8211-57c6fb436e75</UserSecretsId>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Order.Application\Order.Application.csproj" />
+      <ProjectReference Include="..\Order.Core\Order.Core.csproj" />
+      <ProjectReference Include="..\Orders.Persistence\Orders.Persistence.csproj" />
+    </ItemGroup>
+
+</Project>

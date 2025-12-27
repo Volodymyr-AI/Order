@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Order.Core.Event;
+using Order.Core.DomainEvents;
 
 namespace Order.Core.Outbox;
 

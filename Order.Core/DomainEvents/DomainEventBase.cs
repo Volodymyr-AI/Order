@@ -1,4 +1,4 @@
-namespace Order.Core.Event;
+namespace Order.Core.DomainEvents;
 
 public abstract record DomainEventBase : IDomainEvent
 {
