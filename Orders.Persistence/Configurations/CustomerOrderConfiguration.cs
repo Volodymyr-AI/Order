@@ -28,6 +28,11 @@ public sealed class CustomerOrderConfiguration : IEntityTypeConfiguration<Custom
         //Total: Money -> amount + currency_code
         var currencyConv = new CurrencyCodeConverter();
 
+        b.Property<Currency?>("_currency")
+            .HasColumnName("currency_code")
+            .HasConversion(currencyConv)
+            .HasMaxLength(3);
+
         b.OwnsOne<Money>(x => x.Total, m =>
         {
             m.Property(p => p.Amount)
@@ -44,36 +49,32 @@ public sealed class CustomerOrderConfiguration : IEntityTypeConfiguration<Custom
         b.Ignore("DomainEvents");
         b.Ignore("Outbox");
 
-        b.OwnsMany<OrderItem>("_items", items =>
+        b.OwnsMany(o => o.Items, items =>
         {
-            items.ToTable("customer_order_items");
-
+            items.ToTable("order_items");
             items.WithOwner().HasForeignKey("order_id");
 
-            items.Property<int>("id").ValueGeneratedOnAdd();
-            items.HasKey("id");
+            items.Property<Guid>("order_id");
+            items.HasKey("order_id", nameof(OrderItem.ProductId));
 
-            items.Property(x => x.ProductId).HasColumnName("product_id").IsRequired();
-            items.Property(x => x.NameSnapshot).HasColumnName("name_snapshot").HasMaxLength(256).IsRequired();
-            items.Property(x => x.Quantity).HasColumnName("quantity").IsRequired();
+            items.Property(i => i.ProductId).HasColumnName("product_id").IsRequired();
+            items.Property(i => i.NameSnapshot).HasColumnName("name_snapshot").IsRequired();
+            items.Property(i => i.Quantity).HasColumnName("quantity").IsRequired();
 
-            items.OwnsOne(x => x.UnitPriceSnapshot, m =>
+            items.OwnsOne(i => i.UnitPriceSnapshot, m =>
             {
-                m.Property(p => p.Amount)
-                    .HasColumnName("unit_price_amount")
-                    .HasPrecision(18, 2)
-                    .IsRequired();
-
-                m.Property(p => p.Currency)
-                    .HasColumnName("unit_price_currency")
-                    .HasConversion(currencyConv)
-                    .HasMaxLength(3)
+                m.Property(x => x.Amount).HasColumnName("unit_price_amount").IsRequired();
+                m.Property(x => x.Currency)
+                    .HasColumnName("unit_price_currency_code")
+                    .HasConversion(v => v.Code, v => Currency.FromCode(v))
                     .IsRequired();
             });
-
-            items.HasIndex("order_id");
-            items.HasIndex(x => x.ProductId);
         });
+        
+        b.Navigation(x => x.Items)
+            .HasField("_items")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+        
         b.HasIndex(x => x.CustomerId);
         b.HasIndex(x => x.StoreId);
     }

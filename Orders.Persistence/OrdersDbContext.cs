@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Order.Application.Interfaces;
 using Order.Core.BaseModels;
 using Orders.Persistence.Configurations;
 

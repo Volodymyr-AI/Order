@@ -1,18 +1,20 @@
 using Order.Core.BaseModels;
 using Order.Core.DomainEvents;
-using Xunit.Abstractions;
 
 namespace xUnitTesting.DomainTests;
 
 public class CustomerOrderTests
 {
+    private static CustomerOrder CreateOrder(params OrderItem[] items)
+        => CustomerOrder.Create(Guid.NewGuid(), 1, items);
+    
     [Fact]
     public void Total_returns_correct_amount()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 2));
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item B", new Money(5m, Currency.FromCode("USD")), 3));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 2),
+            new OrderItem(Guid.NewGuid(), "Item B", new Money(5m, Currency.FromCode("USD")), 3)
+            );
         
         Assert.Equal(35m, order.Total.Amount);
         Assert.Equal(Currency.FromCode("USD"), order.Total.Currency);
@@ -21,8 +23,9 @@ public class CustomerOrderTests
     [Fact]
     public void AddItem_fails_when_items_have_different_currencies()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1)
+            );
         Assert.Throws<InvalidOperationException>(() => 
             order.AddItem(new OrderItem(Guid.NewGuid(), "Item B", new Money(10m, Currency.FromCode("EUR")), 1)));
     }
@@ -38,8 +41,9 @@ public class CustomerOrderTests
     [Fact]
     public void AddItem_throws_after_confirm()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1)
+            );
         
         order.Confirm();
         
@@ -49,8 +53,7 @@ public class CustomerOrderTests
     [Fact]
     public void Pay_throws_before_confirm()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(new OrderItem(Guid.NewGuid(), "Item A", new Money(5m, Currency.FromCode("USD")), 1));
         
         Assert.Throws<InvalidOperationException>(() => order.Pay());
     }
@@ -58,10 +61,9 @@ public class CustomerOrderTests
     [Fact]
     public void Total_uses_money_rounding_away_from_zero()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        
         // 10.005 => 10.01
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(10.005m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(10.005m, Currency.FromCode("USD")), 1));
         
         Assert.Equal(10.01m, order.Total.Amount);
     }
@@ -69,16 +71,18 @@ public class CustomerOrderTests
     [Fact]
     public void RemoveItem_removes_item_and_recalculates_total()
     {
-        var order = new CustomerOrder(Guid.NewGuid(),  Guid.NewGuid(), 1);
-        
         var aId = Guid.NewGuid();
         var bId = Guid.NewGuid();
         
-        order.AddItem(new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 2)); // 20
-        order.AddItem(new OrderItem(bId, "B", new Money(5m, Currency.FromCode("USD")), 3)); // 15
+        var order = CreateOrder(
+            new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 2), // 20
+            new OrderItem(bId, "B", new Money(5m,  Currency.FromCode("USD")), 3)  // 15
+        );
+        
         Assert.Equal(35m, order.Total.Amount);
         
         order.RemoveItem(bId);
+        
         Assert.Equal(20m, order.Total.Amount);
         Assert.Single(order.Items);
     }
@@ -86,8 +90,9 @@ public class CustomerOrderTests
     [Fact]
     public void RemoveItem_throws_when_item_not_found()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "A", new Money(10m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "A", new Money(10m, Currency.FromCode("USD")), 1)
+        );
         
         Assert.Throws<InvalidOperationException>(() => order.RemoveItem(Guid.NewGuid()));
     }
@@ -95,11 +100,11 @@ public class CustomerOrderTests
     [Fact]
     public void ChangeQuantity_updates_total()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        
         var aId = Guid.NewGuid();
-        order.AddItem(new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 2)); // 20
         
+        var order = CreateOrder(
+            new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 2) // 20
+        );
         order.ChangeQuantity(aId, 5); // 50
         
         Assert.Equal(50m, order.Total.Amount);
@@ -108,10 +113,12 @@ public class CustomerOrderTests
     [Fact]
     public void ChangeQuantity_throws_after_confirm()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        
         var aId = Guid.NewGuid();
-        order.AddItem(new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 1));
+        
+        var order = CreateOrder(
+            new OrderItem(aId, "A", new Money(10m, Currency.FromCode("USD")), 1)
+        );
+        
         order.Confirm();
         
         Assert.Throws<InvalidOperationException>(() => order.ChangeQuantity(aId, 2));
@@ -120,9 +127,10 @@ public class CustomerOrderTests
     [Fact]
     public void Confirm_adds_domain_event()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 1));
-
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 1)
+        );
+        
         order.Confirm();
         
         var ev = Assert.Single(order.DomainEvents);
@@ -136,8 +144,9 @@ public class CustomerOrderTests
     [Fact]
     public void Pay_adds_domain_event()
     {
-        var order = new CustomerOrder(Guid.NewGuid(), Guid.NewGuid(), 1);
-        order.AddItem(new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 1));
+        var order = CreateOrder(
+            new OrderItem(Guid.NewGuid(), "Item A", new Money(10m, Currency.FromCode("USD")), 1)
+        );
         
         order.Confirm();
         order.ClearDomainEvents();

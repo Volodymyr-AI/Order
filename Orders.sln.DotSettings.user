@@ -5,5 +5,15 @@
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.DomainTests.CustomerOrderTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.DomainTests.MoneyTests.Money_rounds_away_from_zero&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.DomainTests.MoneyTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.OrdersTests.Handler_creates_order_and_returns_id&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.OrdersTests.Handler_drops_when_items_empty&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.OrdersTests.Handler_saves_right_total_in_order&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.OrdersTests.Handler_throws_when_currencies_mismatch&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.OrdersTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersEndpointsTests.POST_orders_returns_201_and_orderId&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersEndpointsTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.CreateOrderCommandValidatorTests.Should_have_error_when_quantity_not_positive&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.CreateOrderCommandValidatorTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersEndpointsValidationTests.POST_orders_returns_400_with_validation_problem_details_when_items_empty&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

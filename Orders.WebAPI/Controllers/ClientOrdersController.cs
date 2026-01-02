@@ -1,6 +1,42 @@
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Order.Application.Orders.Commands.CreateOrder;
+using Orders.WebAPI.DTO;
+
 namespace Orders.WebAPI.Controllers;
 
-public class ClientOrdersController
+[ApiController]
+[Route("api/orders")]
+public sealed class ClientOrdersController : ApiControllerBase
 {
-    
+    public ClientOrdersController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateOrderRequest request,
+        CancellationToken ct)
+    {
+        var command = new CreateOrderCommand(
+            request.CustomerId,
+            request.StoreId,
+            request.Items.Select(i =>
+                new CustomerOrderItemDto(
+                    i.ProductId,
+                    i.NameSnapshot,
+                    i.UnitPriceAmount,
+                    i.CurrencyCode,
+                    i.Quantity)).ToList()
+        );
+
+        var orderId = await Mediator.Send(command, ct);
+
+        return CreatedAtAction(nameof(GetById),new { id = orderId }, new { orderId });
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken ct)
+    {
+        return NotFound();
+    }
 }

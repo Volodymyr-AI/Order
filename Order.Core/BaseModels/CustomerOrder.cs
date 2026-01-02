@@ -5,7 +5,7 @@ namespace Order.Core.BaseModels;
 public class CustomerOrder
 {
     private readonly List<OrderItem> _items = new(); 
-    public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
+    public IReadOnlyCollection<OrderItem> Items => _items;
     public Guid Id { get; private set; }
     public Guid CustomerId { get; private set; }
     public int StoreId { get; private set; }
@@ -16,7 +16,7 @@ public class CustomerOrder
     public Money Total { get; private set; } 
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;
     
-    public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ConfirmedAt { get; private set; }
     public DateTimeOffset? PaidAt { get; private set; }
     public DateTimeOffset? CancelledAt { get; private set; }
@@ -29,7 +29,7 @@ public class CustomerOrder
     
     private CustomerOrder() {}
 
-    public CustomerOrder(Guid id, Guid customerId, int storeId)
+    private  CustomerOrder(Guid id, Guid customerId, int storeId)
     {
         if(id == Guid.Empty) throw new ArgumentException("Id is required.", nameof(id));
         if(customerId == Guid.Empty) throw new ArgumentException("CustomerId is required.", nameof(customerId));
@@ -39,6 +39,24 @@ public class CustomerOrder
         CustomerId = customerId;
         StoreId = storeId;
         Status = OrderStatus.Draft;
+    }
+
+    public static CustomerOrder Create(Guid customerId, int storeId, IEnumerable<OrderItem> items)
+    {
+        if (customerId == Guid.Empty) throw new ArgumentException("CustomerId is required.", nameof(customerId));
+        if (storeId <= 0) throw new ArgumentOutOfRangeException(nameof(storeId));
+        if (items is null) throw new ArgumentNullException(nameof(items));
+
+        var list = items.ToList();
+        if(list.Count == 0)
+            throw new InvalidOperationException("Order must contain at least one item.");
+        
+        var order = new CustomerOrder(Guid.NewGuid(), customerId, storeId);
+        
+        foreach(var item in list)
+            order.AddItem(item);
+        
+        return order;
     }
 
     public void AddItem(OrderItem item)

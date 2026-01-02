@@ -2,12 +2,14 @@ namespace Order.Core.BaseModels;
 
 public sealed class OrderItem
 {
-    public Guid ProductId { get; }
-    public string NameSnapshot { get; }
-    public Money UnitPriceSnapshot { get; }
-    public int Quantity { get; }
+    public Guid ProductId { get; private set; }
+    public string NameSnapshot { get; private set; } = default!;
+    public Money UnitPriceSnapshot { get; private set; } = default!;
+    public int Quantity { get; private set; }
     
     public Money LineTotal => UnitPriceSnapshot * Quantity;
+    
+    private OrderItem() { } // EfCore
 
     public OrderItem(Guid productId, string nameSnapshot, Money unitPriceSnapshot, int quantity)
     {
