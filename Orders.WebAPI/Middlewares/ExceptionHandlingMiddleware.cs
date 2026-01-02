@@ -21,8 +21,27 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
                 Title = ex.Message,
                 Status = context.Response.StatusCode
             };
-            
+
             await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Status = 401
+            });
+        }
+        catch (ForbiddenException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Status = 403,
+                Detail = ex.Message
+            });
         }
     }
 }

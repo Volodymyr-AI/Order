@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -23,6 +24,14 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             _connection.Open();
 
             services.AddDbContext<OrdersDbContext>(opt => opt.UseSqlite(_connection));
+            services.AddAuthentication(options =>  
+                {
+                    options.DefaultAuthenticateScheme = TestAuthHandler.Scheme;
+                    options.DefaultChallengeScheme = TestAuthHandler.Scheme;
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.Scheme, _ => { });
+            
+            services.AddAuthorization();
 
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();

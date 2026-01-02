@@ -4,6 +4,7 @@ using Order.Application.Interfaces;
 using Order.Application.Orders.Commands.CreateOrder;
 using Orders.Persistence;
 using Orders.Persistence.Repositories;
+using Orders.WebAPI.Auth;
 using Orders.WebAPI.Middlewares;
 
 namespace Orders.WebAPI;
@@ -17,8 +18,12 @@ public partial class Program
         // Add services to the container.
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        
+
+        builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
+        
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
@@ -47,6 +52,7 @@ public partial class Program
         app.UseHttpsRedirection();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 
