@@ -129,8 +129,34 @@ public sealed class OrdersEndpointsTests : IClassFixture<CustomWebApplicationFac
         
         var response = await _client.PostAsJsonAsync("/api/orders", request);
         
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);   
     }
+    
+    [Fact]
+    public async Task POST_orders_with_no_storeId_returns_400()
+    {
+        var request = new
+        {
+            customerId = Guid.NewGuid(),
+            storeId = 0,
+            items = new[]
+            {
+                new
+                {
+                    productId = Guid.NewGuid(),
+                    nameSnapshot = "Item A",
+                    unitPriceAmount = 10m,
+                    currencyCode = "USD",
+                    quantity = 1
+                }
+            }
+        };
+        
+        var response = await _client.PostAsJsonAsync("/api/orders", request);
+        
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);   
+    }
+    
 
     [Fact]
     public async Task GET_order_by_id_returns_200_for_owner()
