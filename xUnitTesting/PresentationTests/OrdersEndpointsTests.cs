@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Order.Application.Orders.Commands.ConfirmOrder;
 using Order.Application.Orders.Queries.GetOrder;
 
 namespace xUnitTesting.PresentationTests;
@@ -250,6 +252,151 @@ public sealed class OrdersEndpointsTests : IClassFixture<CustomWebApplicationFac
         var getResponse = await _client.SendAsync(getHttp);
         
         Assert.Equal(HttpStatusCode.Forbidden, getResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_confirm_order_as_owner_returns_200_and_status_confirmed()
+    {
+        var userId = Guid.NewGuid();
+        
+        var request = new
+        {
+            customerId = userId,
+            storeId = 1,
+            items = new[]
+            {
+                new
+                {
+                    productId = Guid.NewGuid(),
+                    nameSnapshot = "Item A",
+                    unitPriceAmount = 10m,
+                    currencyCode = "USD",
+                    quantity = 2
+                }
+            }
+        };
+        var createResponse = await _client.PostAsJsonAsync("/api/orders", request);  
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
+        Assert.NotNull(created);
+
+        var confirm = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/orders/{created.OrderId}/confirm");
+        confirm.Headers.Add("x-test-user", userId.ToString());
+        
+        var confirmedResponse = 
+            await _client.SendAsync(confirm);
+        Assert.Equal(HttpStatusCode.OK, confirmedResponse.StatusCode);
+        
+        var dto = await confirmedResponse.Content.ReadFromJsonAsync<ConfirmOrderDto>();
+        Assert.NotNull(dto);
+        Assert.Equal(created.OrderId, dto!.OrderId);
+        Assert.Equal("Confirmed", dto.OrderStatus);
+    }
+
+    [Fact]
+    public async Task POST_confirm_as_other_user_returns_403()
+    {
+        var wrongUserId = Guid.NewGuid();
+        
+        var request = new
+        {
+            customerId = Guid.NewGuid(),
+            storeId = 1,
+            items = new[]
+            {
+                new
+                {
+                    productId = Guid.NewGuid(),
+                    nameSnapshot = "Item A",
+                    unitPriceAmount = 10m,
+                    currencyCode = "USD",
+                    quantity = 2
+                }
+            }
+        };
+        var createResponse = await _client.PostAsJsonAsync("/api/orders", request);  
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
+        Assert.NotNull(created);
+        
+        var confirm = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/orders/{created.OrderId}/confirm");
+        confirm.Headers.Add("x-test-user", wrongUserId.ToString());
+        
+        var confirmedResponse = 
+            await _client.SendAsync(confirm);
+        
+        Assert.Equal(HttpStatusCode.Forbidden, confirmedResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Confirm_non_existing_order_returns_404()
+    {
+        var confirm = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/orders/{Guid.NewGuid()}/confirm");
+        confirm.Headers.Add("x-test-user", Guid.NewGuid().ToString());
+        
+        var confirmedResponse = await _client.SendAsync(confirm);
+        
+        Assert.Equal(HttpStatusCode.NotFound, confirmedResponse.StatusCode);
+    }
+    
+    [Fact]
+    public async Task Confirm_twice_returns_400()
+    {
+        var userId = Guid.NewGuid();
+        
+        var request = new
+        {
+            customerId = userId,
+            storeId = 1,
+            items = new[]
+            {
+                new
+                {
+                    productId = Guid.NewGuid(),
+                    nameSnapshot = "Item A",
+                    unitPriceAmount = 10m,
+                    currencyCode = "USD",
+                    quantity = 2
+                }
+            }
+        };
+
+        using var create = new HttpRequestMessage(HttpMethod.Post, "/api/orders")
+        {
+            Content = JsonContent.Create(request)
+        };
+        create.Headers.Add("x-test-user", userId.ToString());
+        
+        var createResponse = await _client.SendAsync(create);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
+        Assert.NotNull(created);
+        
+        // confirm #1
+        using var confirm1 = new HttpRequestMessage(
+            HttpMethod.Post, $"/api/orders/{created!.OrderId}/confirm");
+        confirm1.Headers.Add("x-test-user", userId.ToString());
+
+        var r1 = await _client.SendAsync(confirm1);
+        Assert.Equal(HttpStatusCode.OK, r1.StatusCode);
+        
+        // confirm #2
+        using var confirm2 = new HttpRequestMessage(
+            HttpMethod.Post, $"/api/orders/{created!.OrderId}/confirm");
+        confirm2.Headers.Add("x-test-user", userId.ToString());
+
+        var r2 = await _client.SendAsync(confirm2);
+        
+        Assert.Equal(HttpStatusCode.BadRequest, r2.StatusCode);
     }
     private sealed record CreateOrderResponse(Guid OrderId);
 }

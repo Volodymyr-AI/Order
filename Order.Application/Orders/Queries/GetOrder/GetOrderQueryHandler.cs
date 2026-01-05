@@ -1,3 +1,4 @@
+using System.Globalization;
 using MediatR;
 using Order.Application.Common.Exceptions;
 using Order.Application.Interfaces;
@@ -22,8 +23,8 @@ public class GetOrderQueryHandler : IRequestHandler<GetOrderQuery, OrderDetailsD
             throw new UnauthorizedAccessException("User is not authenticated");
         
         var order = await _repo.GetByIdAsync(request.OrderId, ct);
-        if(order is null)
-            return null;
+        if (order is null)
+            throw new NotFoundException($"Order with id: {request.OrderId} not found");
         
         if(order.CustomerId != _currentUser.UserId)
             throw new ForbiddenException("You are not allowed to access this order.");

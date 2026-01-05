@@ -43,5 +43,28 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
                 Detail = ex.Message
             });
         }
+        catch (NotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+                {
+                    Title = "Not Found",
+                    Status = 404,
+                    Detail = ex.Message
+                }
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Bad Request",
+                Status = 400,
+                Detail = ex.Message
+            });
+        }
     }
 }

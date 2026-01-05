@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Order.Application.Orders.Commands.ConfirmOrder;
 using Order.Application.Orders.Commands.CreateOrder;
 using Order.Application.Orders.Queries.GetOrder;
 using Orders.WebAPI.DTO;
@@ -44,5 +45,13 @@ public sealed class ClientOrdersController : ApiControllerBase
     {
         var dto = await Mediator.Send(new GetOrderQuery(id), ct);
         return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPost("{id:guid}/confirm")]
+    [Authorize]
+    public async Task<IActionResult> Confirm([FromRoute] Guid id, CancellationToken ct)
+    {
+        var dto = await Mediator.Send(new ConfirmOrderCommand(id), ct);
+        return Ok(dto);
     }
 }

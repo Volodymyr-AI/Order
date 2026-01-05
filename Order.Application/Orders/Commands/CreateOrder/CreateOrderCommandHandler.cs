@@ -4,7 +4,7 @@ using Order.Core.BaseModels;
 
 namespace Order.Application.Orders.Commands.CreateOrder;
 
-public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Guid>
+public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Guid>
 {
     private readonly IOrderRepository _orderRepository;
 
