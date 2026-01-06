@@ -1,6 +1,7 @@
 using MediatR;
 using Order.Application.Common.Exceptions;
 using Order.Application.Interfaces;
+using Order.Core.Outbox;
 
 namespace Order.Application.Orders.Commands.ConfirmOrder;
 
@@ -8,11 +9,13 @@ public sealed class ConfirmOrderCommandHandler : IRequestHandler<ConfirmOrderCom
 {
     private readonly IOrderRepository _repo;
     private readonly ICurrentUser _currentUser;
+    private readonly IOutboxStore _outboxStore;
     
-    public ConfirmOrderCommandHandler(IOrderRepository repo,  ICurrentUser currentUser)
+    public ConfirmOrderCommandHandler(IOrderRepository repo,  ICurrentUser currentUser, IOutboxStore outboxStore)
     {
         _repo = repo;
         _currentUser = currentUser;
+        _outboxStore = outboxStore;
     }
     
     public async Task<ConfirmOrderDto> Handle(ConfirmOrderCommand request, CancellationToken ct)
@@ -28,6 +31,8 @@ public sealed class ConfirmOrderCommandHandler : IRequestHandler<ConfirmOrderCom
             throw new ForbiddenException("You are not allowed to confirm this order.");
         
         order.Confirm();
+        OutboxCollector.CollectFromAggregator(order.DomainEvents, _outboxStore);
+        order.ClearDomainEvents();
 
         await _repo.SaveChangesAsync(ct);
         return new ConfirmOrderDto(

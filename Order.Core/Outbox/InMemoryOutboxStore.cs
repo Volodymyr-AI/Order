@@ -10,4 +10,18 @@ public class InMemoryOutboxStore : IOutboxStore
             => _messages.Where(m => m.ProcessedAt == null).Take(take).ToList();
 
     public OutboxMessage? Find(Guid id) => _messages.FirstOrDefault(m => m.Id == id);
+
+    public void MarkProcessed(Guid id, DateTimeOffset processedAt)
+    {
+        var msg = Find(id);
+        if (msg is null) return;
+        msg.MarkProcessed(processedAt);
+    }
+
+    public void MarkFailed(Guid id, string error)
+    {
+        var msg = Find(id);
+        if (msg is null) return;
+        msg.MarkFailed(error);
+    }
 }

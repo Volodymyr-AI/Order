@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Order.Application;
 using Order.Application.Interfaces;
-using Order.Application.Orders.Commands.CreateOrder;
+using Order.Core.Outbox;
 using Orders.Persistence;
 using Orders.Persistence.Repositories;
 using Orders.WebAPI.Auth;
 using Orders.WebAPI.Middlewares;
+using Orders.WebAPI.Workers;
+using Scalar.AspNetCore;
 
 namespace Orders.WebAPI;
 
@@ -24,6 +26,10 @@ public partial class Program
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+        
+        builder.Services.AddSingleton<IOutboxStore, InMemoryOutboxStore>();
+        builder.Services.AddSingleton<IOutboxPublisher, LoggingOutboxPublisher>();
+        builder.Services.AddHostedService<OutboxDispatcherBackgroundService>();
 
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
@@ -47,6 +53,7 @@ public partial class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.MapScalarApiReference();
         }
         
         app.UseHttpsRedirection();
@@ -54,6 +61,7 @@ public partial class Program
         
         app.UseAuthentication();
         app.UseAuthorization();
+        
         app.MapControllers();
 
         app.Run();

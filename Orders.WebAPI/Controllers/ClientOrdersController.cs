@@ -6,7 +6,9 @@ using Order.Application.Orders.Commands.ConfirmOrder;
 using Order.Application.Orders.Commands.CreateOrder;
 using Order.Application.Orders.Commands.PayOrder;
 using Order.Application.Orders.Queries.GetOrder;
+using Order.Core.Outbox;
 using Orders.WebAPI.DTO;
+using Orders.WebAPI.Workers;
 
 namespace Orders.WebAPI.Controllers;
 
