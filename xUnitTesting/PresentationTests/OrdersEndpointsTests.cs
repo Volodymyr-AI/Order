@@ -398,5 +398,193 @@ public sealed class OrdersEndpointsTests : IClassFixture<CustomWebApplicationFac
         
         Assert.Equal(HttpStatusCode.BadRequest, r2.StatusCode);
     }
+    
+     [Fact]
+    public async Task POST_pay_after_confirm_returns_200()
+    {
+        var userId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(userId);
+        await ConfirmAs(userId, orderId);
+
+        var pay = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/pay");
+        pay.Headers.Add("x-test-user", userId.ToString());
+
+        var payResponse = await _client.SendAsync(pay);
+
+        Assert.Equal(HttpStatusCode.OK, payResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_pay_without_confirm_returns_400()
+    {
+        var userId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(userId);
+
+        var pay = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/pay");
+        pay.Headers.Add("x-test-user", userId.ToString());
+
+        var payResponse = await _client.SendAsync(pay);
+
+        Assert.Equal(HttpStatusCode.BadRequest, payResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_pay_as_other_user_returns_403()
+    {
+        var ownerId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(ownerId);
+        await ConfirmAs(ownerId, orderId);
+
+        var pay = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/pay");
+        pay.Headers.Add("x-test-user", otherId.ToString());
+
+        var payResponse = await _client.SendAsync(pay);
+
+        Assert.Equal(HttpStatusCode.Forbidden, payResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_pay_non_existing_order_returns_404()
+    {
+        var userId = Guid.NewGuid();
+
+        var pay = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{Guid.NewGuid()}/pay");
+        pay.Headers.Add("x-test-user", userId.ToString());
+
+        var payResponse = await _client.SendAsync(pay);
+
+        Assert.Equal(HttpStatusCode.NotFound, payResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_pay_without_auth_returns_401()
+    {
+        // No x-test-user header -> TestAuthHandler fails -> 401
+        var payResponse = await _client.PostAsync($"/api/orders/{Guid.NewGuid()}/pay", content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, payResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_cancel_as_owner_returns_204()
+    {
+        var userId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(userId);
+
+        var cancel = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/cancel");
+        cancel.Headers.Add("x-test-user", userId.ToString());
+
+        var cancelResponse = await _client.SendAsync(cancel);
+
+        Assert.Equal(HttpStatusCode.NoContent, cancelResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_cancel_as_other_user_returns_403()
+    {
+        var ownerId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(ownerId);
+
+        var cancel = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/cancel");
+        cancel.Headers.Add("x-test-user", otherId.ToString());
+
+        var cancelResponse = await _client.SendAsync(cancel);
+
+        Assert.Equal(HttpStatusCode.Forbidden, cancelResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_cancel_non_existing_order_returns_404()
+    {
+        var userId = Guid.NewGuid();
+
+        var cancel = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{Guid.NewGuid()}/cancel");
+        cancel.Headers.Add("x-test-user", userId.ToString());
+
+        var cancelResponse = await _client.SendAsync(cancel);
+
+        Assert.Equal(HttpStatusCode.NotFound, cancelResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_cancel_without_auth_returns_401()
+    {
+        var cancelResponse = await _client.PostAsync($"/api/orders/{Guid.NewGuid()}/cancel", content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, cancelResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_cancel_twice_is_idempotent_and_returns_204()
+    {
+        var userId = Guid.NewGuid();
+
+        var orderId = await CreateOrderAs(userId);
+
+        // cancel #1
+        var cancel1 = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/cancel");
+        cancel1.Headers.Add("x-test-user", userId.ToString());
+        var r1 = await _client.SendAsync(cancel1);
+        Assert.Equal(HttpStatusCode.NoContent, r1.StatusCode);
+
+        // cancel #2
+        var cancel2 = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/cancel");
+        cancel2.Headers.Add("x-test-user", userId.ToString());
+        var r2 = await _client.SendAsync(cancel2);
+        Assert.Equal(HttpStatusCode.NoContent, r2.StatusCode);
+    }
+
+    // ---------- Helpers ----------
+
+    private async Task<Guid> CreateOrderAs(Guid userId)
+    {
+        var request = new
+        {
+            customerId = userId,
+            storeId = 1,
+            items = new[]
+            {
+                new
+                {
+                    productId = Guid.NewGuid(),
+                    nameSnapshot = "Item A",
+                    unitPriceAmount = 10m,
+                    currencyCode = "USD",
+                    quantity = 2
+                }
+            }
+        };
+
+        using var create = new HttpRequestMessage(HttpMethod.Post, "/api/orders")
+        {
+            Content = JsonContent.Create(request)
+        };
+        create.Headers.Add("x-test-user", userId.ToString());
+
+        var createResponse = await _client.SendAsync(create);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var body = await createResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
+        Assert.NotNull(body);
+        Assert.NotEqual(Guid.Empty, body!.OrderId);
+
+        return body.OrderId;
+    }
+
+    private async Task ConfirmAs(Guid userId, Guid orderId)
+    {
+        using var confirm = new HttpRequestMessage(HttpMethod.Post, $"/api/orders/{orderId}/confirm");
+        confirm.Headers.Add("x-test-user", userId.ToString());
+
+        var confirmResponse = await _client.SendAsync(confirm);
+        Assert.Equal(HttpStatusCode.OK, confirmResponse.StatusCode);
+    }
     private sealed record CreateOrderResponse(Guid OrderId);
 }
