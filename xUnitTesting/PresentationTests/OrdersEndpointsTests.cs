@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Order.Application.Orders.Commands.ConfirmOrder;
 using Order.Application.Orders.Queries.GetOrder;
+using xUnitTesting.PresentationTests.Additional;
 
 namespace xUnitTesting.PresentationTests;
 

@@ -15,5 +15,7 @@
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.CreateOrderCommandValidatorTests.Should_have_error_when_quantity_not_positive&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.ApplicationTests.CreateOrderCommandValidatorTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersEndpointsValidationTests.POST_orders_returns_400_with_validation_problem_details_when_items_empty&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersJwtAuthTests.GET_order_returns_200_with_valid_bearer_token&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::CCDFDE80-F256-4CF4-B48B-37088467788B::net10.0::xUnitTesting.PresentationTests.OrdersJwtAuthTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

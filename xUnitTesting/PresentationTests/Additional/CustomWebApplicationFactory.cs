@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -8,9 +7,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Orders.Persistence;
 using Orders.WebAPI;
 
-namespace xUnitTesting.PresentationTests;
+namespace xUnitTesting.PresentationTests.Additional;
 
-public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private SqliteConnection? _connection;
 
@@ -22,16 +21,11 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
+            
+            services.RemoveAll(typeof(DbContextOptions<OrdersDbContext>));
+            services.RemoveAll(typeof(OrdersDbContext));
 
             services.AddDbContext<OrdersDbContext>(opt => opt.UseSqlite(_connection));
-            services.AddAuthentication(options =>  
-                {
-                    options.DefaultAuthenticateScheme = TestAuthHandler.Scheme;
-                    options.DefaultChallengeScheme = TestAuthHandler.Scheme;
-                })
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.Scheme, _ => { });
-            
-            services.AddAuthorization();
 
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
