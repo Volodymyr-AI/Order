@@ -12,7 +12,7 @@ namespace xUnitTesting.PresentationTests;
 public sealed class OrdersJwtAuthTests : IClassFixture<JwtWebApplicationFactory>
 {
     private readonly HttpClient _client;
-    private const string JwtKey = "2Fwd7vdJvGunASlbzD+SAE/KteGRuxsrOY4G50++o3M=";
+    private const string JwtKey = "nvgRXq3Fh1I2JxKDgtSGv5rPyws5puNuIkWe9cJGyT0=";
 
     public OrdersJwtAuthTests(JwtWebApplicationFactory factory)
     {

@@ -76,7 +76,8 @@ public partial class Program
 
         // Layers injections
         builder.Services.AddApplication();
-        if (!builder.Environment.IsEnvironment("Testing"))
+        if (!builder.Environment.IsEnvironment("Testing") &&
+            !builder.Environment.IsEnvironment("JwtTesting"))
         {
             builder.Services.AddPersistence(builder.Configuration.GetConnectionString("OrdersDb")!);
         }
