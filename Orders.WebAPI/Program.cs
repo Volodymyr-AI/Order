@@ -67,7 +67,7 @@ public partial class Program
         
         builder.Services.AddAuthorization();
         
-        builder.Services.AddSingleton<IOutboxStore, InMemoryOutboxStore>();
+        builder.Services.AddScoped<IOutboxStore, EfOutboxStore>();
         builder.Services.AddSingleton<IOutboxPublisher, LoggingOutboxPublisher>();
         builder.Services.AddHostedService<OutboxDispatcherBackgroundService>();
 
