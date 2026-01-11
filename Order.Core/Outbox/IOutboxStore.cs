@@ -8,4 +8,5 @@ public interface IOutboxStore
     
     void MarkProcessed(Guid id, DateTimeOffset processedAt);
     void MarkFailed(Guid id, string error);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

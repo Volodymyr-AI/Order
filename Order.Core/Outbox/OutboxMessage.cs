@@ -2,14 +2,16 @@ namespace Order.Core.Outbox;
 
 public sealed class OutboxMessage
 {
-    public Guid Id { get; }
-    public DateTimeOffset OccurredAt { get; }
-    public string Type { get; }
-    public string PayloadJson { get; }
+    public Guid Id { get; private set; }
+    public DateTimeOffset OccurredAt { get; private set; }
+    public string Type { get; private set; } = default!;
+    public string PayloadJson { get; private set; } = default!;
     
     public DateTimeOffset? ProcessedAt { get; private set; }
     public int Attempts { get; private set; }
     public string? LastError { get; private set; }
+    
+    private OutboxMessage() { }
 
     public OutboxMessage(Guid id, DateTimeOffset occurredAt, string type, string payloadJson)
     {
