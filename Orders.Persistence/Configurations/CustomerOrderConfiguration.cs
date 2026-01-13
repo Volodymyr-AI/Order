@@ -63,7 +63,7 @@ public sealed class CustomerOrderConfiguration : IEntityTypeConfiguration<Custom
 
             items.OwnsOne(i => i.UnitPriceSnapshot, m =>
             {
-                m.Property(x => x.Amount).HasColumnName("unit_price_amount").IsRequired();
+                m.Property(x => x.Amount).HasColumnName("unit_price_amount").IsRequired().HasPrecision(18, 2);
                 m.Property(x => x.Currency)
                     .HasColumnName("unit_price_currency_code")
                     .HasConversion(v => v.Code, v => Currency.FromCode(v))

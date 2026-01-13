@@ -22,8 +22,7 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
             .HasColumnName("occurred_at")
             .IsRequired();
         b.Property(x => x.ProcessedAt)
-            .HasColumnName("processed_at")
-            .IsRequired();
+            .HasColumnName("processed_at");
         b.Property(x => x.Attempts)
             .HasColumnName("attempts")
             .IsRequired();
