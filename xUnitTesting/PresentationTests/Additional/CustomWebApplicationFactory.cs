@@ -25,7 +25,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(DbContextOptions<OrdersDbContext>));
             services.RemoveAll(typeof(OrdersDbContext));
 
-            services.AddDbContext<OrdersDbContext>(opt => opt.UseSqlite(_connection));
+            services.AddScoped<OutboxSaveChangesInterceptor>();
+            services.AddDbContext<OrdersDbContext>((sp, opt) =>
+            {
+                opt.UseSqlite(_connection);
+                opt.AddInterceptors(sp.GetRequiredService<OutboxSaveChangesInterceptor>());
+            });
 
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();

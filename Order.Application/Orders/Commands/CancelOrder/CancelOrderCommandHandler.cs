@@ -27,8 +27,8 @@ public sealed class CancelOrderCommandHandler : IRequestHandler<CancelOrderComma
             throw new ForbiddenException("You are not allowed to cancel this order.");
         
         order.Cancel();
-
         await _repo.SaveChangesAsync(ct);
+        
         return Unit.Value;
     }
 }

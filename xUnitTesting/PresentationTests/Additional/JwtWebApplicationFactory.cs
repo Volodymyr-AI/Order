@@ -33,7 +33,12 @@ public sealed class JwtWebApplicationFactory : WebApplicationFactory<Program>
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
 
-            services.AddDbContext<OrdersDbContext>(opt => opt.UseSqlite(_connection));
+            services.AddScoped<OutboxSaveChangesInterceptor>();
+            services.AddDbContext<OrdersDbContext>((sp, opt) =>
+            {
+                opt.UseSqlite(_connection);
+                opt.AddInterceptors(sp.GetRequiredService<OutboxSaveChangesInterceptor>());
+            });
             
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
