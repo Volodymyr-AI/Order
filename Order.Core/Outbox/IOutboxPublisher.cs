@@ -2,5 +2,5 @@ namespace Order.Core.Outbox;
 
 public interface IOutboxPublisher
 {
-    Task PublishAsync(string type, string payloadJson, CancellationToken ct);
+    Task PublishAsync(Guid messageId, string type, string payloadJson, CancellationToken ct);
 }

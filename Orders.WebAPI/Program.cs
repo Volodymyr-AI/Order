@@ -9,6 +9,7 @@ using Order.Application;
 using Order.Application.Interfaces;
 using Order.Core.Outbox;
 using Orders.Persistence;
+using Orders.Persistence.Kafka;
 using Orders.Persistence.Repositories;
 using Orders.WebAPI.Auth;
 using Orders.WebAPI.Middlewares;
@@ -68,9 +69,25 @@ public partial class Program
         builder.Services.AddAuthorization();
         
         builder.Services.AddScoped<IOutboxStore, EfOutboxStore>();
-        builder.Services.AddSingleton<IOutboxPublisher, LoggingOutboxPublisher>();
-        builder.Services.AddHostedService<OutboxDispatcherBackgroundService>();
+        
+        builder.Services.Configure<KafkaOptions>(builder.Configuration.GetSection("Kafka"));
+        
+        var outboxPublisher =
+            builder.Environment.IsEnvironment("Testing") || builder.Environment.IsEnvironment("JwtTesting")
+                ? "Logging"
+                : builder.Configuration["Outbox:Publisher"];
+        
+        if (string.Equals(outboxPublisher, "Kafka", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Services.AddSingleton<IOutboxPublisher, KafkaOutboxPublisher>();
+        }
+        else
+        {
+            builder.Services.AddSingleton<IOutboxPublisher, LoggingOutboxPublisher>();
+        }
 
+        builder.Services.AddHostedService<OutboxDispatcherBackgroundService>();
+        
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
 

@@ -38,7 +38,7 @@ public sealed class OutboxDispatcherBackgroundService : BackgroundService
                     {
                         try
                         {
-                            await _publisher.PublishAsync(msg.Type, msg.PayloadJson, sT);
+                            await _publisher.PublishAsync(msg.Id, msg.Type, msg.PayloadJson, sT);
                             store.MarkProcessed(msg.Id, DateTimeOffset.UtcNow);
                         }
                         catch (Exception ex)
