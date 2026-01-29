@@ -36,15 +36,24 @@ public sealed class OutboxDispatcherBackgroundService : BackgroundService
                 {
                     foreach (var msg in batch)
                     {
-                        try
+
+                        using (_log.BeginScope(new Dictionary<string, object>
+                               {
+                                   ["correlationId"] = msg.CorrelationId
+                               }))
                         {
-                            await _publisher.PublishAsync(msg.Id, msg.Type, msg.PayloadJson, msg.CorrelationId, sT);
-                            store.MarkProcessed(msg.Id, DateTimeOffset.UtcNow);
-                        }
-                        catch (Exception ex)
-                        {
-                            store.MarkFailed(msg.Id, ex.Message);
-                            _log.LogWarning(ex, "Failed to publish outbox message {Id}", msg.Id);
+                            try
+                            {
+                                _log.LogInformation("Publishing message {MessageId}", msg.Id);
+                                await _publisher.PublishAsync(msg.Id, msg.Type, msg.PayloadJson, msg.CorrelationId, sT);
+                                store.MarkProcessed(msg.Id, DateTimeOffset.UtcNow);
+                                _log.LogInformation("Message {MessageId} published", msg.Id);
+                            }
+                            catch (Exception ex)
+                            {
+                                store.MarkFailed(msg.Id, ex.Message);
+                                _log.LogWarning(ex, "Failed to publish outbox message {Id}", msg.Id);
+                            }
                         }
                     }
                     await store.SaveChangesAsync(sT);
