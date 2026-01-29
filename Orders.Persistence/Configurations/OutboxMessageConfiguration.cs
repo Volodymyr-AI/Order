@@ -18,6 +18,10 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         b.Property(x => x.PayloadJson)
             .HasColumnName("payload_json")
             .IsRequired();
+        b.Property(x => x.CorrelationId)
+            .HasColumnName("correlation_id")
+            .IsRequired()
+            .HasMaxLength(64);
         b.Property(x => x.OccurredAt)
             .HasColumnName("occurred_at")
             .IsRequired();
@@ -31,5 +35,6 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
             .HasMaxLength(2000);
 
         b.HasIndex(x => x.ProcessedAt).HasDatabaseName("ix_outbox_processed_at");
+        b.HasIndex(x => x.CorrelationId).HasDatabaseName("ix_outbox_correlation_id");
     }
 }

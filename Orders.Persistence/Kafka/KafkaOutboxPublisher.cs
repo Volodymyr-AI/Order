@@ -1,3 +1,4 @@
+using System.Text;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,7 +32,12 @@ public sealed class KafkaOutboxPublisher : IOutboxPublisher, IDisposable
         _producer = new ProducerBuilder<string, string>(config).Build();
     }
 
-    public async Task PublishAsync(Guid messageId, string type, string payloadJson, CancellationToken ct)
+    public async Task PublishAsync(
+        Guid messageId,
+        string type,
+        string payloadJson,
+        string correlationId,
+        CancellationToken ct)
     {
         var topic = ResolveTopic(type);
         var message = new Message<string, string>
@@ -40,7 +46,8 @@ public sealed class KafkaOutboxPublisher : IOutboxPublisher, IDisposable
             Value = payloadJson,
             Headers = new Headers
             {
-                new Header("event_type", System.Text.Encoding.UTF8.GetBytes(type))
+                new Header("event_type", System.Text.Encoding.UTF8.GetBytes(type)),
+                new Header("correlationId", Encoding.UTF8.GetBytes(correlationId))
             }
         };
         
@@ -49,12 +56,13 @@ public sealed class KafkaOutboxPublisher : IOutboxPublisher, IDisposable
         try
         {
             var result = await _producer.ProduceAsync(topic, message).ConfigureAwait(false);
-            _log.LogInformation("Kafka published topic={Topic} partition={Partition} offset={Offset} type={Type}",
-                result.Topic, result.Partition, result.Offset, type);
+            _log.LogInformation("Kafka published topic={Topic} partition={Partition} offset={Offset} type={Type} correlationId={CorrelationId}",
+                result.Topic, result.Partition, result.Offset, type, correlationId);
         }
         catch (ProduceException<string, string> ex)
         {
-            _log.LogWarning(ex, "Kafka publish failed type={Type}", type);
+            _log.LogWarning(ex, "Kafka publish failed type={Type} correlationId={CorrelationId}", 
+                type, correlationId);
             throw;
         }
     }

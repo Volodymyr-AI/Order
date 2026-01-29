@@ -11,9 +11,9 @@ public sealed class LoggingOutboxPublisher : IOutboxPublisher
         _log = log;
     }
 
-    public Task PublishAsync(Guid messageId, string type, string payloadJson, CancellationToken ct)
+    public Task PublishAsync(Guid messageId, string type, string payloadJson, string correlationId, CancellationToken ct)
     {
-        _log.LogInformation("OUTBOX PUBLISH id={Id} type={Type} payload={Payload}", messageId, type, payloadJson);
+        _log.LogInformation("OUTBOX PUBLISH id={Id} type={Type} payload={Payload} correlationId={CorrelationId}", messageId, type, payloadJson, correlationId);
         return Task.CompletedTask;
     }
 }

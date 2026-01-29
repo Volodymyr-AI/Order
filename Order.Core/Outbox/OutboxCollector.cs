@@ -1,10 +1,13 @@
 using System.Text.Json;
+using Order.Application.Interfaces;
 using Order.Core.DomainEvents;
 
 namespace Order.Core.Outbox;
 
 public static class OutboxCollector
 {
+    private static readonly ICorrelationIdAccessor _correlationIdAccessor;
+    
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = false
@@ -19,12 +22,14 @@ public static class OutboxCollector
 
             var type = ev.GetType().FullName ?? ev.GetType().Name;
             var payload = JsonSerializer.Serialize(ev, ev.GetType(), JsonOptions);
-
+            var correlationId = _correlationIdAccessor.Get();
+            
             var msg = new OutboxMessage(
                 id: Guid.NewGuid(),
                 occurredAt: baseEvent.OccurredAt,
                 type: type,
-                payloadJson: payload);
+                payloadJson: payload,
+                correlationId: correlationId);
             
             outbox.Add(msg);
         }

@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Update;
+using Order.Application.Interfaces;
 using Order.Core.DomainEvents;
 using Order.Core.Outbox;
 
@@ -9,6 +10,7 @@ namespace Orders.Persistence;
 
 public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
 {
+    private readonly ICorrelationIdAccessor _correlationIdAccessor;
     private sealed class PendingState
     {
         public required List<IHasDomainEvents> Aggregates { get; init; }
@@ -16,6 +18,11 @@ public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
     }
 
     private readonly ConditionalWeakTable<DbContext, PendingState> _pending = new();
+    
+    public OutboxSaveChangesInterceptor(ICorrelationIdAccessor correlationIdAccessor)
+    {
+        _correlationIdAccessor = correlationIdAccessor;
+    }
 
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
@@ -82,6 +89,7 @@ public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
             return;
         
         var messages = new List<OutboxMessage>(capacity: 16);
+        var correlationId = _correlationIdAccessor.Get();
 
         foreach (var agg in aggregates)
         {
@@ -97,7 +105,8 @@ public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
                     id: Guid.NewGuid(),
                     occurredAt: baseEvent.OccurredAt,
                     type: type,
-                    payloadJson: payload
+                    payloadJson: payload,
+                    correlationId: correlationId
                 ));
             }
         }
