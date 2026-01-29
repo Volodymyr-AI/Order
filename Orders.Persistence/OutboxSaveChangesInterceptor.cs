@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Update;
+using Microsoft.Extensions.Logging;
 using Order.Application.Interfaces;
 using Order.Core.DomainEvents;
 using Order.Core.Outbox;
@@ -11,6 +12,7 @@ namespace Orders.Persistence;
 public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly ICorrelationIdAccessor _correlationIdAccessor;
+    private readonly ILogger<OutboxSaveChangesInterceptor> _logger;
     private sealed class PendingState
     {
         public required List<IHasDomainEvents> Aggregates { get; init; }
@@ -19,9 +21,12 @@ public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
 
     private readonly ConditionalWeakTable<DbContext, PendingState> _pending = new();
     
-    public OutboxSaveChangesInterceptor(ICorrelationIdAccessor correlationIdAccessor)
+    public OutboxSaveChangesInterceptor(
+        ICorrelationIdAccessor correlationIdAccessor,
+        ILogger<OutboxSaveChangesInterceptor> logger)
     {
         _correlationIdAccessor = correlationIdAccessor;
+        _logger = logger;
     }
 
     public override InterceptionResult<int> SavingChanges(
@@ -118,6 +123,9 @@ public sealed class OutboxSaveChangesInterceptor : SaveChangesInterceptor
             Aggregates = aggregates,
             Messages = messages
         });
+        
+        _logger.LogInformation(
+            "Added {Count} messages to outbox with correlationId {CorrelationId}", messages.Count, correlationId);
     }
 
     private void FinalizeAfterSuccess(DbContext? context)
