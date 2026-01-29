@@ -11,6 +11,7 @@ using Order.Core.Outbox;
 using Orders.Persistence;
 using Orders.Persistence.Kafka;
 using Orders.Persistence.Repositories;
+using Orders.WebAPI.Additional;
 using Orders.WebAPI.Auth;
 using Orders.WebAPI.Middlewares;
 using Orders.WebAPI.Workers;
@@ -29,6 +30,7 @@ public partial class Program
         builder.Services.AddEndpointsApiExplorer();
         
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICorrelationIdAccessor, HttpCorrelationIdAccessor>();
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
         if (builder.Environment.IsEnvironment("Testing"))
@@ -116,6 +118,7 @@ public partial class Program
         
         app.UseHttpsRedirection();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<CorrelationIdMiddleware>();
         
         app.UseAuthentication();
         app.UseAuthorization();

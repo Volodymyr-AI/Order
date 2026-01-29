@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 using Order.Core.Outbox;
 
 namespace Orders.Persistence.Kafka;
