@@ -13,6 +13,7 @@ using Orders.Persistence.Kafka;
 using Orders.Persistence.Repositories;
 using Orders.WebAPI.Additional;
 using Orders.WebAPI.Auth;
+using Orders.WebAPI.Idempotency;
 using Orders.WebAPI.Middlewares;
 using Orders.WebAPI.Workers;
 using Scalar.AspNetCore;
@@ -31,7 +32,9 @@ public partial class Program
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICorrelationIdAccessor, HttpCorrelationIdAccessor>();
+        builder.Services.AddScoped<IRequestIdentityAccessor, IRequestIdentityAccessor>();
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+        builder.Services.AddScoped<IdempotencyService>();
 
         if (builder.Environment.IsEnvironment("Testing"))
         {
@@ -119,6 +122,7 @@ public partial class Program
         app.UseHttpsRedirection();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseMiddleware<CorrelationIdMiddleware>();
+        app.UseMiddleware<ClientIdMiddleware>();
         
         app.UseAuthentication();
         app.UseAuthorization();
@@ -133,7 +137,7 @@ public partial class Program
                 SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                claims: new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) },
+                claims: new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
                 expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: creds);
 

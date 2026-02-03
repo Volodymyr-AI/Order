@@ -9,7 +9,8 @@ namespace Orders.Persistence;
 public class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbContext(options)
 {
     public DbSet<CustomerOrder> CustomerOrders => Set<CustomerOrder>();
-    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>(); 
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<IdempotencyRecord> IdempotencyKeys => Set<IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
