@@ -12,6 +12,15 @@ services:
       - "5433:5432"
     volumes:
       - orders_pg:/var/lib/postgresql/data
+        
+  redis:
+    image: redis:7-alpine
+    container_name: orders-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - orders_redis:/data
   
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1

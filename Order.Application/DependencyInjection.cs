@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Order.Application.Common.Behaviors;
+using Order.Application.Orders.Queries.GetOrder;
 
 namespace Order.Application;
 
@@ -17,6 +18,8 @@ public static class DependencyInjection
 
         // pipeline behavior:
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        
+        services.Decorate<IRequestHandler<GetOrderQuery, OrderDetailsDto?>, CachedGetOrderQueryHandler>();
 
         return services;
     }
